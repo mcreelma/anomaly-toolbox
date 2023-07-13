@@ -1,0 +1,275 @@
+---------------------------------------------------------------------------
+ValueError                                Traceback (most recent call last)
+Cell In[2], line 6
+      1 from examples.fqi import FQI as dataset
+      3 # dataset = dataset()
+----> 6 dataset().configure(
+      7     batch_size=32,
+      8     new_size=(256, 256),
+      9     anomalous_label=1,
+     10     class_label=None,
+     11     shuffle_buffer_size=1000,
+     12     cache=True,
+     13     drop_remainder=True,
+     14     output_range=(-1.0, 1.0)
+     15 )
+     18 train_dataset = dataset.train
+     19 validation_dataset = dataset.validation
+
+File /mnt/c/Users/mcree/Documents/Code/GANs/anomaly-toolbox/examples/fqi.py:83, in FQI.configure(self, batch_size, new_size, anomalous_label, class_label, shuffle_buffer_size, cache, drop_remainder, output_range)
+     77     raise ValueError("No anomalous images found.")
+     79 # ...
+     81 self._train_anomalous = tf.data.Dataset.from_tensor_slices(all_anomalous_train).map(
+     82     _read_and_map_fn(self.anomalous_label)
+---> 83 ).apply(pipeline_train)
+     85 self._train_normal = tf.data.Dataset.from_tensor_slices(all_normal_train).map(
+     86     _read_and_map_fn(self.normal_label)
+     87 ).apply(pipeline_train)
+     89 if not self._train_anomalous:
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/dataset_ops.py:2481, in DatasetV2.apply(self, transformation_func)
+   2460 def apply(self, transformation_func):
+   2461   """Applies a transformation function to this dataset.
+   2462 
+   2463   `apply` enables chaining of custom `Dataset` transformations, which are
+   (...)
+   2479     A new `Dataset` with the transformation applied as described above.
+   2480   """
+-> 2481   dataset = transformation_func(self)
+   2482   if not isinstance(dataset, DatasetV2):
+   2483     raise TypeError(
+   2484         f"`transformation_func` must return a `tf.data.Dataset` object. "
+   2485         f"Got {type(dataset)}.")
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/anomaly_toolbox/datasets/dataset.py:197, in AnomalyDetectionDataset.pipeline(dataset, new_size, batch_size, cache, shuffle_buffer_size, is_training, drop_remainder, output_range)
+    167 @staticmethod
+    168 def pipeline(
+    169     dataset: tf.data.Dataset,
+   (...)
+    176     output_range: Tuple[float, float] = (0.0, 1.0),
+    177 ) -> tf.data.Dataset:
+    178     """Given a dataset, configure it applying the chain of
+    179     map, filter, shuffle and all the needed methods of the tf.data.Dataset.
+    180     Args:
+   (...)
+    195         The configured dataset object.
+    196     """
+--> 197     dataset = dataset.map(
+    198         lambda image, label: (
+    199             tf.image.resize(
+    200                 image, size=new_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR
+    201             ),
+    202             label,
+    203         )
+    204     )
+    206     dataset = dataset.map(
+    207         lambda image, label: (tf.cast(image, tf.float32) / 255.0, label)
+    208     )
+    210     if output_range != (0.0, 1.0):
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/dataset_ops.py:2240, in DatasetV2.map(self, map_func, num_parallel_calls, deterministic, name)
+   2236 # Loaded lazily due to a circular dependency (dataset_ops -> map_op ->
+   2237 # dataset_ops).
+   2238 # pylint: disable=g-import-not-at-top,protected-access
+   2239 from tensorflow.python.data.ops import map_op
+-> 2240 return map_op._map_v2(
+   2241     self,
+   2242     map_func,
+   2243     num_parallel_calls=num_parallel_calls,
+   2244     deterministic=deterministic,
+   2245     name=name)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/map_op.py:37, in _map_v2(input_dataset, map_func, num_parallel_calls, deterministic, name)
+     34   if deterministic is not None and not debug_mode.DEBUG_MODE:
+     35     warnings.warn("The `deterministic` argument has no effect unless the "
+     36                   "`num_parallel_calls` argument is specified.")
+---> 37   return _MapDataset(
+     38       input_dataset, map_func, preserve_cardinality=True, name=name)
+     39 else:
+     40   return _ParallelMapDataset(
+     41       input_dataset,
+     42       map_func,
+   (...)
+     45       preserve_cardinality=True,
+     46       name=name)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/map_op.py:107, in _MapDataset.__init__(self, input_dataset, map_func, use_inter_op_parallelism, preserve_cardinality, use_legacy_function, name)
+    105 self._use_inter_op_parallelism = use_inter_op_parallelism
+    106 self._preserve_cardinality = preserve_cardinality
+--> 107 self._map_func = structured_function.StructuredFunctionWrapper(
+    108     map_func,
+    109     self._transformation_name(),
+    110     dataset=input_dataset,
+    111     use_legacy_function=use_legacy_function)
+    112 self._name = name
+    113 variant_tensor = gen_dataset_ops.map_dataset(
+    114     input_dataset._variant_tensor,  # pylint: disable=protected-access
+    115     self._map_func.function.captured_inputs,
+   (...)
+    118     preserve_cardinality=self._preserve_cardinality,
+    119     **self._common_args)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/structured_function.py:261, in StructuredFunctionWrapper.__init__(self, func, transformation_name, dataset, input_classes, input_shapes, input_types, input_structure, add_to_graph, use_legacy_function, defun_kwargs)
+    254       warnings.warn(
+    255           "Even though the `tf.config.experimental_run_functions_eagerly` "
+    256           "option is set, this option does not apply to tf.data functions. "
+    257           "To force eager execution of tf.data functions, please use "
+    258           "`tf.data.experimental.enable_debug_mode()`.")
+    259     fn_factory = trace_tf_function(defun_kwargs)
+--> 261 self._function = fn_factory()
+    262 # There is no graph to add in eager mode.
+    263 add_to_graph &= not context.executing_eagerly()
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/eager/polymorphic_function/tracing_compiler.py:232, in TracingCompiler.get_concrete_function(self, *args, **kwargs)
+    223 def get_concrete_function(self, *args, **kwargs):
+    224   """Returns a `ConcreteFunction` specialized to inputs and execution context.
+    225 
+    226   Args:
+   (...)
+    230       `tf.Tensor` or `tf.TensorSpec`.
+    231   """
+--> 232   concrete_function = self._get_concrete_function_garbage_collected(
+    233       *args, **kwargs)
+    234   concrete_function._garbage_collector.release()  # pylint: disable=protected-access
+    235   return concrete_function
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/eager/polymorphic_function/tracing_compiler.py:202, in TracingCompiler._get_concrete_function_garbage_collected(self, *args, **kwargs)
+    199   self._function_spec.make_canonicalized_monomorphic_type(args, kwargs)
+    201 with self._lock:
+--> 202   concrete_function, _ = self._maybe_define_concrete_function(args, kwargs)
+    203   seen_names = set()
+    204   concrete_function._arg_keywords = []  # pylint: disable=protected-access
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/eager/polymorphic_function/tracing_compiler.py:166, in TracingCompiler._maybe_define_concrete_function(self, args, kwargs)
+    163   args = self.input_signature
+    164   kwargs = {}
+--> 166 return self._maybe_define_function(args, kwargs)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/eager/polymorphic_function/tracing_compiler.py:396, in TracingCompiler._maybe_define_function(self, args, kwargs)
+    393   args = placeholder_bound_args.args
+    394 kwargs = placeholder_bound_args.kwargs
+--> 396 concrete_function = self._create_concrete_function(
+    397     args, kwargs, func_graph)
+    399 # TODO(b/263520817): Remove access to private attribute.
+    400 graph_capture_container = concrete_function.graph._function_captures  # pylint: disable=protected-access
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/eager/polymorphic_function/tracing_compiler.py:300, in TracingCompiler._create_concrete_function(self, args, kwargs, func_graph)
+    296 else:
+    297   arg_names = base_arg_names
+    299 concrete_function = monomorphic_function.ConcreteFunction(
+--> 300     func_graph_module.func_graph_from_py_func(
+    301         self._name,
+    302         self._python_function,
+    303         args,
+    304         kwargs,
+    305         None,
+    306         func_graph=func_graph,
+    307         autograph=self._autograph,
+    308         autograph_options=self._autograph_options,
+    309         arg_names=arg_names,
+    310         capture_by_value=self._capture_by_value,
+    311         create_placeholders=False),
+    312     self._function_attributes,
+    313     spec=self.function_spec,
+    314     # Tell the ConcreteFunction to clean up its graph once it goes out of
+    315     # scope. This is not the default behavior since it gets used in some
+    316     # places (like Keras) where the FuncGraph lives longer than the
+    317     # ConcreteFunction.
+    318     shared_func_graph=False)
+    319 return concrete_function
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/framework/func_graph.py:1214, in func_graph_from_py_func(name, python_func, args, kwargs, signature, func_graph, autograph, autograph_options, add_control_dependencies, arg_names, op_return_value, collections, capture_by_value, create_placeholders, acd_record_initial_resource_uses)
+   1211 else:
+   1212   _, original_func = tf_decorator.unwrap(python_func)
+-> 1214 func_outputs = python_func(*func_args, **func_kwargs)
+   1216 # invariant: `func_outputs` contains only Tensors, CompositeTensors,
+   1217 # TensorArrays and `None`s.
+   1218 func_outputs = variable_utils.convert_variables_to_tensors(func_outputs)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/structured_function.py:238, in StructuredFunctionWrapper.__init__..trace_tf_function..wrapped_fn(*args)
+    232 @eager_function.defun_with_attributes(
+    233     input_signature=structure.get_flat_tensor_specs(
+    234         self._input_structure),
+    235     autograph=False,
+    236     attributes=defun_kwargs)
+    237 def wrapped_fn(*args):  # pylint: disable=missing-docstring
+--> 238   ret = wrapper_helper(*args)
+    239   ret = structure.to_tensor_list(self._output_structure, ret)
+    240   return [ops.convert_to_tensor(t) for t in ret]
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/data/ops/structured_function.py:169, in StructuredFunctionWrapper.__init__..wrapper_helper(*args)
+    167 if not _should_unpack(nested_args):
+    168   nested_args = (nested_args,)
+--> 169 ret = autograph.tf_convert(self._func, ag_ctx)(*nested_args)
+    170 ret = variable_utils.convert_variables_to_tensors(ret)
+    171 if _should_pack(ret):
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/impl/api.py:692, in convert..decorator..wrapper(*args, **kwargs)
+    690 except Exception as e:  # pylint:disable=broad-except
+    691   if hasattr(e, 'ag_error_metadata'):
+--> 692     raise e.ag_error_metadata.to_exception(e)
+    693   else:
+    694     raise
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/impl/api.py:689, in convert..decorator..wrapper(*args, **kwargs)
+    687 try:
+    688   with conversion_ctx:
+--> 689     return converted_call(f, args, kwargs, options=options)
+    690 except Exception as e:  # pylint:disable=broad-except
+    691   if hasattr(e, 'ag_error_metadata'):
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/impl/api.py:439, in converted_call(f, args, kwargs, caller_fn_scope, options)
+    437 try:
+    438   if kwargs is not None:
+--> 439     result = converted_f(*effective_args, **kwargs)
+    440   else:
+    441     result = converted_f(*effective_args)
+
+File /tmp/__autograph_generated_filefmj1qa9c.py:6, in outer_factory..inner_factory..(image, label)
+      5 def inner_factory(ag__):
+----> 6     tf__lam = lambda image, label: ag__.with_function_scope(lambda lscope: (ag__.converted_call(tf.image.resize, (image,), dict(size=new_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR), lscope), label), 'lscope', ag__.STD)
+      7     return tf__lam
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/core/function_wrappers.py:113, in with_function_scope(thunk, scope_name, options)
+    111 """Inline version of the FunctionScope context manager."""
+    112 with FunctionScope('lambda_', scope_name, options) as scope:
+--> 113   return thunk(scope)
+
+File /tmp/__autograph_generated_filefmj1qa9c.py:6, in outer_factory..inner_factory..(lscope)
+      5 def inner_factory(ag__):
+----> 6     tf__lam = lambda image, label: ag__.with_function_scope(lambda lscope: (ag__.converted_call(tf.image.resize, (image,), dict(size=new_size, method=tf.image.ResizeMethod.NEAREST_NEIGHBOR), lscope), label), 'lscope', ag__.STD)
+      7     return tf__lam
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/impl/api.py:331, in converted_call(f, args, kwargs, caller_fn_scope, options)
+    329 if conversion.is_in_allowlist_cache(f, options):
+    330   logging.log(2, 'Allowlisted %s: from cache', f)
+--> 331   return _call_unconverted(f, args, kwargs, options, False)
+    333 if ag_ctx.control_status_ctx().status == ag_ctx.Status.DISABLED:
+    334   logging.log(2, 'Allowlisted: %s: AutoGraph is disabled in context', f)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/autograph/impl/api.py:458, in _call_unconverted(f, args, kwargs, options, update_cache)
+    455   return f.__self__.call(args, kwargs)
+    457 if kwargs is not None:
+--> 458   return f(*args, **kwargs)
+    459 return f(*args)
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/util/traceback_utils.py:153, in filter_traceback..error_handler(*args, **kwargs)
+    151 except Exception as e:
+    152   filtered_tb = _process_traceback_frames(e.__traceback__)
+--> 153   raise e.with_traceback(filtered_tb) from None
+    154 finally:
+    155   del filtered_tb
+
+File ~/miniconda3/envs/GAN/lib/python3.11/site-packages/tensorflow/python/ops/image_ops_impl.py:1443, in _resize_images_common(images, resizer_fn, size, preserve_aspect_ratio, name, skip_resize_if_same)
+   1441 images = ops.convert_to_tensor(images, name='images')
+   1442 if images.get_shape().ndims is None:
+-> 1443   raise ValueError('\'images\' contains no shape.')
+   1444 # TODO(shlens): Migrate this functionality to the underlying Op's.
+   1445 is_batch = True
+
+ValueError: in user code:
+
+    File "/home/mcreelman/miniconda3/envs/GAN/lib/python3.11/site-packages/anomaly_toolbox/datasets/dataset.py", line 198, in None  *
+        )
+
+    ValueError: 'images' contains no shape.

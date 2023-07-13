@@ -9,6 +9,9 @@
         "batch_size": {
             "type": "Discrete",
             "values": [
+                4,
+                8,
+                16,
                 32
             ]
         },

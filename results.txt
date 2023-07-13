@@ -1,0 +1,105 @@
+Running AnoGAN experiment...
+Model: "generator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense_1 (Dense)             (None, 6272)              627200    
+                                                                 
+ batch_normalization (BatchN  (None, 6272)             25088     
+ ormalization)                                                   
+                                                                 
+ leaky_re_lu_2 (LeakyReLU)   (None, 6272)              0         
+                                                                 
+ reshape (Reshape)           (None, 7, 7, 128)         0         
+                                                                 
+ conv2d_transpose (Conv2DTra  (None, 7, 7, 128)        65536     
+ nspose)                                                         
+                                                                 
+ batch_normalization_1 (Batc  (None, 7, 7, 128)        512       
+ hNormalization)                                                 
+                                                                 
+ leaky_re_lu_3 (LeakyReLU)   (None, 7, 7, 128)         0         
+                                                                 
+ conv2d_transpose_1 (Conv2DT  (None, 14, 14, 64)       32768     
+ ranspose)                                                       
+                                                                 
+ batch_normalization_2 (Batc  (None, 14, 14, 64)       256       
+ hNormalization)                                                 
+                                                                 
+ leaky_re_lu_4 (LeakyReLU)   (None, 14, 14, 64)        0         
+                                                                 
+ conv2d_transpose_2 (Conv2DT  (None, 28, 28, 1)        1600      
+ ranspose)                                                       
+                                                                 
+ activation (Activation)     (None, 28, 28, 1)         0         
+                                                                 
+=================================================================
+Total params: 752,960
+Trainable params: 740,032
+Non-trainable params: 12,928
+_________________________________________________________________
+Model: "discriminator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ sequential (Sequential)     (None, 14, 14, 32)        832       
+                                                                 
+ sequential_1 (Sequential)   (None, 1)                 54401     
+                                                                 
+=================================================================
+Total params: 55,233
+Trainable params: 55,233
+Non-trainable params: 0
+_________________________________________________________________
+Model: "generator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ dense_1 (Dense)             (None, 6272)              627200    
+                                                                 
+ batch_normalization (BatchN  (None, 6272)             25088     
+ ormalization)                                                   
+                                                                 
+ leaky_re_lu_2 (LeakyReLU)   (None, 6272)              0         
+                                                                 
+ reshape (Reshape)           (None, 7, 7, 128)         0         
+                                                                 
+ conv2d_transpose (Conv2DTra  (None, 7, 7, 128)        65536     
+ nspose)                                                         
+                                                                 
+ batch_normalization_1 (Batc  (None, 7, 7, 128)        512       
+ hNormalization)                                                 
+                                                                 
+ leaky_re_lu_3 (LeakyReLU)   (None, 7, 7, 128)         0         
+                                                                 
+ conv2d_transpose_1 (Conv2DT  (None, 14, 14, 64)       32768     
+ ranspose)                                                       
+                                                                 
+ batch_normalization_2 (Batc  (None, 14, 14, 64)       256       
+ hNormalization)                                                 
+                                                                 
+ leaky_re_lu_4 (LeakyReLU)   (None, 14, 14, 64)        0         
+                                                                 
+ conv2d_transpose_2 (Conv2DT  (None, 28, 28, 1)        1600      
+ ranspose)                                                       
+                                                                 
+ activation (Activation)     (None, 28, 28, 1)         0         
+                                                                 
+=================================================================
+Total params: 752,960
+Trainable params: 740,032
+Non-trainable params: 12,928
+_________________________________________________________________
+Model: "discriminator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ sequential (Sequential)     (None, 14, 14, 32)        832       
+                                                                 
+ sequential_1 (Sequential)   (None, 1)                 54401     
+                                                                 
+=================================================================
+Total params: 55,233
+Trainable params: 55,233
+Non-trainable params: 0
+_________________________________________________________________

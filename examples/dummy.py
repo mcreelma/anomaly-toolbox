@@ -37,7 +37,9 @@ class Dummy(AnomalyDetectionDataset):
     b. Download the data directly from an online location
     c. Provide the dataset through the use of a local folder that contain all the data
 
-    This Dummy class is set up to be used in case "a" and "b". Case "c" should not differ too
+    This Dummy class is set up to be used in case "a" and "b". 
+    
+    Case "c" should not differ too
     much from these two cases.
 
     Note:
@@ -46,7 +48,10 @@ class Dummy(AnomalyDetectionDataset):
             - The label 0 is for the NORMAL class.
     """
 
-    def __init__(self, path: Path = Path("surface_cracks")):
+
+    def __init__(self, 
+                #  path: Path = Path("surface_cracks")
+                 ):
         """
         Args:
             path: Provide a location where to download the data. The string should be provided
@@ -55,30 +60,30 @@ class Dummy(AnomalyDetectionDataset):
         super().__init__()
 
         # ## The dataset can comes directly from tfds (case "a") ## #
-        (self._train_raw, self._test_raw), info = tfds.load(
-            "DATASET-NAME-HERE-FOR-EXAMPLE-mnist",
-            split=["train", "test"],
-            as_supervised=True,
-            with_info=True,
-        )
+        # (self._train_raw, self._test_raw), info = tfds.load(
+        #     "fqi",
+        #     split=["train", "test"],
+        #     as_supervised=True,
+        #     with_info=True,
+        # )
 
         self._num_classes = info.features["label"].num_classes
 
         # ## Download the data and convert it into a Dataset structure (case "b) ## #
 
         # Provide the url from where to download the data
-        self._archive_url = (
-            "https://"
-            "md-datasets-cache-zipfiles-prod.s3.eu-west-1"
-            ".amazonaws.com/5y9wdsg2zt-2.zip"
-        )
+        # self._archive_url = (
+        #     "https://"
+        #     "md-datasets-cache-zipfiles-prod.s3.eu-west-1"
+        #     ".amazonaws.com/5y9wdsg2zt-2.zip"
+        # )
 
         # Store the path to be used next where to save the downloaded data
-        self._path = path
+        # self._path = path
 
         # Call the function to download and extract the data, the implementation of this
         # function should be provided by the user.
-        self._download_and_extract()
+        # self._download_and_extract()
 
         def _read_and_map_fn(label):
             """Closure used in tf.data.Dataset.map for creating
@@ -96,7 +101,7 @@ class Dummy(AnomalyDetectionDataset):
         # dataset images. Note that self._path has been filled using self._download_and_extract()
         # function call above. What you should do is something as the following:
 
-        glob_ext = "*.jpg"
+        glob_ext = "*.fits"
         all_normal = glob(str(self._path / "Negative" / glob_ext))
         all_normal_train = all_normal[:10000]
 
@@ -164,10 +169,13 @@ class Dummy(AnomalyDetectionDataset):
             output_range=output_range,
         )
 
+
+
         pipeline_train = partial(pipeline, is_training=True)
         pipeline_test = partial(pipeline, is_training=False)
         is_anomalous = lambda _, label: tf.equal(label, anomalous_label)
         is_normal = lambda _, label: tf.not_equal(label, anomalous_label)
+
 
         # You should fill every one of this variable with the corresponding data
         # Train-data
@@ -175,10 +183,12 @@ class Dummy(AnomalyDetectionDataset):
         self._train_normal = None
         self._train = None
 
+
         # Validation data
         self._validation_anomalous = None
         self._validation_normal = None
         self._validation = None
+
 
         # Test-data
         self._test_anomalous = None
